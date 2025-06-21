@@ -3,7 +3,7 @@ export default function Preview() {
     <div className="p-4 bg-gray-100 min-h-screen">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold mb-4 text-gray-800">
-          👁️ Ava's Live Preview
+          👁️ Cipher.ai's Live Preview
         </h1>
         
         <div className="bg-white rounded-lg shadow-lg p-6 mb-4">
