@@ -3,6 +3,12 @@ import { useEffect, useRef } from "react";
 export default function CodeMirrorEditor({ value, onChange }) {
   const ref = useRef();
   const cmInstance = useRef();
+  const onChangeRef = useRef(onChange);
+
+  // Keep onChange ref current
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   useEffect(() => {
     // Only initialize in browser and if we haven't already
@@ -14,9 +20,8 @@ export default function CodeMirrorEditor({ value, onChange }) {
         import("codemirror/lib/codemirror.css")
       ]).then(([CodeMirrorModule]) => {
         const CodeMirror = CodeMirrorModule.default || CodeMirrorModule;
-        
         const cm = CodeMirror(ref.current, {
-          value: value || "// Start coding here...",
+          value: "// Start coding here...", // Use default, will be set by second useEffect
           mode: "javascript",
           lineNumbers: true,
           theme: "default",
@@ -24,8 +29,8 @@ export default function CodeMirrorEditor({ value, onChange }) {
         });
 
         cm.on("change", () => {
-          if (onChange) {
-            onChange(cm.getValue());
+          if (onChangeRef.current) {
+            onChangeRef.current(cm.getValue());
           }
         });
 
@@ -34,25 +39,34 @@ export default function CodeMirrorEditor({ value, onChange }) {
         console.log("CodeMirror failed to load:", error);
         // Fallback to textarea
         const textarea = document.createElement('textarea');
-        textarea.value = value || "// CodeMirror fallback mode";
+        textarea.value = "// CodeMirror fallback mode"; // Use default, will be set by second useEffect
         textarea.className = "w-full h-full p-2 bg-gray-900 text-green-200 font-mono";
         textarea.addEventListener('input', (e) => {
-          if (onChange) onChange(e.target.value);
+          if (onChangeRef.current) onChangeRef.current(e.target.value);
         });
         ref.current.appendChild(textarea);
       });
     }
-  }, []);
+  }, []); // Empty deps - only initialize once
 
   // Update value when prop changes
   useEffect(() => {
-    if (cmInstance.current && value !== undefined) {
-      const currentValue = cmInstance.current.getValue();
-      if (currentValue !== value) {
-        cmInstance.current.setValue(value);
+    if (value !== undefined) {
+      if (cmInstance.current) {
+        // CodeMirror instance
+        const currentValue = cmInstance.current.getValue();
+        if (currentValue !== value) {
+          cmInstance.current.setValue(value);
+        }
+      } else if (ref.current) {
+        // Fallback textarea
+        const textarea = ref.current.querySelector('textarea');
+        if (textarea && textarea.value !== value) {
+          textarea.value = value;
+        }
       }
     }
-  }, [value]);
+  }, [value]); // Only value needed here
 
   return (
     <div
